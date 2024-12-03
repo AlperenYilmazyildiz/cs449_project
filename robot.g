@@ -11,7 +11,7 @@ robot_base (world): {
 
 joint_1 (robot_base): {
     joint: transZ,
-    pre: "T t(0 0.1 0)"  
+    pre: "T t(0 0 0)"  
 }
 
 robot_leg_1 (joint_1): {
@@ -24,7 +24,7 @@ robot_leg_1 (joint_1): {
 
 joint_2 (robot_base): {
     joint: transZ,
-    pre: "T t(0 -0.1 0)"  
+    pre: "T t(0 0 0)"  
 }
 
 robot_leg_2 (joint_2): {
