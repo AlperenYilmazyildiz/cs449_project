@@ -164,7 +164,7 @@ mesh1(car1): {
 }
 
 # Car 2 
-car2(drop_point_1): { 
+car2(parking_space_18): { 
     Q: "t(0 0 0.14) d(180 0 0 1)", 
     shape:box, 
     size:[0.9, 0.39, 0.28], 
@@ -191,6 +191,42 @@ car3(parking_space_22): {
     contact: 1 
 }
 mesh3(car3): { 
+    Q: "t(0.0835 -0.205 -0.39) d(0 0 0 0)", 
+    shape:mesh, 
+    mesh:"files/Mustang.stl", 
+    mass:1, 
+    color:[1 0 0], 
+    meshscale=.0009
+}
+
+# Car 4
+car4(parking_space_25): { 
+    Q: "t(0 0 0.14) d(0 0 0 0)", 
+    shape:box, 
+    size:[0.9, 0.39, 0.28], 
+    mass:1, 
+    color:[0.2, 0.2, 0.2, 0.3], 
+    contact: 1 
+}
+mesh4(car4): { 
+    Q: "t(0.0835 -0.205 -0.39) d(0 0 0 0)", 
+    shape:mesh, 
+    mesh:"files/Mustang.stl", 
+    mass:1, 
+    color:[1 0 0], 
+    meshscale=.0009
+}
+
+# Car 5
+car5(parking_space_21): { 
+    Q: "t(0 0 0.14) d(0 0 0 0)", 
+    shape:box, 
+    size:[0.9, 0.39, 0.28], 
+    mass:1, 
+    color:[0.2, 0.2, 0.2, 0.3], 
+    contact: 1 
+}
+mesh5(car5): { 
     Q: "t(0.0835 -0.205 -0.39) d(0 0 0 0)", 
     shape:mesh, 
     mesh:"files/Mustang.stl", 

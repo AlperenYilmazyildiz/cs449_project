@@ -9,7 +9,7 @@ table(table_base): {
 }
 
 Prefix: "l_"
-Include: </home/alperen/Desktop/cs449_project/rai-robotModels/panda/panda.g>
+Include: </home/biqu/RAI/cs449_project/rai-robotModels/panda/panda.g>
 Prefix: False
 
 Edit l_panda_base (table): { Q: "t(0 -.2 .05) d(90 0 0 1)" }
