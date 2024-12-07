@@ -146,23 +146,57 @@ drop_point_3 (parking_lot): { Q: "t(-1 2.5 0) d(90 0 0 1)", shape: box, size:[1,
 robot_start (parking_lot): { Q: "t(-3.5 0.5 0)", shape: box, size:[1, 0.4, 0.005], color:[0.7, 0.7, 0.0], contact: 1  }
 
 # Car 1 
-car1(parking_space_1): { 
-    Q: "t(0 0.2 0.18) d(90 1 0 0)", 
+car1(parking_space_20): { 
+    Q: "t(0 0 0.14) d(0 0 0 0)", 
+    shape:box, 
+    size:[0.9, 0.39, 0.28], 
+    mass:1, 
+    color:[0.2, 0.2, 0.2, 0.3], 
+    contact: 1 
+}
+mesh1(car1): { 
+    Q: "t(0.0835 -0.205 -0.39) d(0 0 0 0)", 
     shape:mesh, 
-    mesh:"files/Mini_car_02.STL", 
+    mesh:"files/Mustang.stl", 
     mass:1, 
     color:[1 0 0], 
-    meshscale=.01, contact: 1 
+    meshscale=.0009
 }
 
 # Car 2 
 car2(drop_point_1): { 
-    Q: "t(0 0.2 0.18) d(90 1 0 0)", 
+    Q: "t(0 0 0.14) d(180 0 0 1)", 
+    shape:box, 
+    size:[0.9, 0.39, 0.28], 
+    mass:1, 
+    color:[0.2, 0.2, 0.2, 0.3], 
+    contact: 1 
+}
+mesh2(car2): { 
+    Q: "t(0.0835 -0.205 -0.39) d(0 0 0 0)", 
     shape:mesh, 
-    mesh:"files/Mini_car_02.STL", 
+    mesh:"files/Mustang.stl", 
     mass:1, 
     color:[1 0 0], 
-    meshscale=.01, contact: 1 
+    meshscale=.0009
+}
+
+# Car 3
+car3(parking_space_22): { 
+    Q: "t(0 0 0.14) d(0 0 0 0)", 
+    shape:box, 
+    size:[0.9, 0.39, 0.28], 
+    mass:1, 
+    color:[0.2, 0.2, 0.2, 0.3], 
+    contact: 1 
+}
+mesh3(car3): { 
+    Q: "t(0.0835 -0.205 -0.39) d(0 0 0 0)", 
+    shape:mesh, 
+    mesh:"files/Mustang.stl", 
+    mass:1, 
+    color:[1 0 0], 
+    meshscale=.0009
 }
 
 Prefix: "l_"
