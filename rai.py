@@ -103,3 +103,11 @@ sim_manager.setTarget('car2')
 g = sim_manager.objects
 # View the simulation
 C.view()
+
+# retrieve all atrributes as a csv file and save the file
+import csv
+keys = g[0].keys()
+with open('objects.csv', 'w') as output_file:
+    dict_writer = csv.DictWriter(output_file, keys)
+    dict_writer.writeheader()
+    dict_writer.writerows(g)
