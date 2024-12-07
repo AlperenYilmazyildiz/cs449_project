@@ -122,7 +122,7 @@ def visualize_path(environment_file, obstacles_file, robots_file, path):
 ### STEP 6: Main Execution Function ###
 if __name__ == "__main__":
     # Load environment
-    file_path = os.path.abspath('Project') # Adjust the name of the folder according to the project
+    file_path = os.path.abspath('cs449_project') # Adjust the name of the folder according to the project
     environment_file = os.path.join(file_path, "scenarios/environment.g")
     obstacles_file = os.path.join(file_path, "scenarios/obstacles.g")
     robots_file = os.path.join(file_path, "scenarios/robots.g")
