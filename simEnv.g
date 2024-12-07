@@ -2,7 +2,7 @@
 # Parking Lot Configuration
 # ==========================
 
-world: { X: "t(0 0 0)"} 
+world: { X: "t(0 0 0)" } 
 
 # Root Frame: Parking Lot
 parking_lot(world): { X: "t(0 0 0.01)", shape: box, size:[10, 10, 0], color:[0.5 0.5 0.5], mass: .1, contact: 1 }
@@ -155,7 +155,7 @@ car1(parking_space_1): {
     meshscale=.01, contact: 1 
 }
 
-# Car 2 
+# Car 2 [-0.2   2.5   0.19]
 car2(drop_point_1): { 
     Q: "t(0 0.2 0.18) d(90 1 0 0)", 
     shape:mesh, 
@@ -170,7 +170,6 @@ Include: <robot.g>
 Prefix: False
 
 Edit l_robot_base (robot_start): { Q: "t(-0.3 0 0.16)" }
-
 
 
 
