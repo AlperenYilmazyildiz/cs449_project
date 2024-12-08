@@ -1,19 +1,34 @@
 world: {}
 
-robot_base (world): { 
-    Q: "t(0 0 0.18)", 
+robot_base (world): {
+    Q: "t(0 0 0)", 
     shape:box, 
-    mass:1, 
-    size:[0.1, 0.4, 0.2], 
-    color:[0 1 0],
+    mass:0.1, 
+    size:[0.1, 0.4, 0.01], 
+    color:[0 0 0],
     joint: transXYPhi,
-    limits: [-10,10,-10,10,-4,4]
+    limits: [-20,20,-20,20,-4,4],
+    contact: 1
 }
 
-joint_1 (robot_base): {
+robot_body (robot_base): { 
+    Q: "t(0 0 0.1)", 
+    shape:box, 
+    mass:0.1, 
+    size:[0.1, 0.4, 0.2], 
+    color:[0 1 0]
+}
+
+robot_marker (robot_body): {
+    Q: "t(0 0 0.3)", 
+    shape: marker,
+    size: [.3]
+}
+
+joint_1 (robot_body): {
     joint: transZ,
     pre: "T t(0 0 0)",
-    limits: [0.1, 3.]
+    limits: [0.05, 0.1]
 }
 
 robot_leg_1 (joint_1): {
@@ -24,10 +39,10 @@ robot_leg_1 (joint_1): {
     color:[0 1 0] 
 }
 
-joint_2 (robot_base): {
+joint_2 (robot_body): {
     joint: transZ,
     pre: "T t(0 0 0)", 
-    limits: [0.1, 3.]  
+    limits: [0.05, 0.1]  
 }
 
 robot_leg_2 (joint_2): {
@@ -36,6 +51,12 @@ robot_leg_2 (joint_2): {
     mass:1, 
     size:[0.8, 0.08, 0.02], 
     color:[0 1 0] 
+}
+
+middle_joint(robot_body): {
+    Q: "t(0.4 0 0)",
+    shape: marker,
+    size: [.1]
 }
 
 #Prefix: "W1_", Include: <wheel.g>
