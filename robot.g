@@ -7,7 +7,7 @@ robot_base (world): {
     size:[0.1, 0.4, 0.01], 
     color:[0 0 0],
     joint: transXYPhi,
-    limits: [-20,20,-20,20,-4,4],
+    limits: [-8,8,-8,8,-4,4],
     contact: 1
 }
 
@@ -16,7 +16,8 @@ robot_body (robot_base): {
     shape:box, 
     mass:0.1, 
     size:[0.1, 0.4, 0.2], 
-    color:[0 1 0]
+    color:[0 1 0],
+    contact: 1
 }
 
 robot_marker (robot_body): {
@@ -34,7 +35,7 @@ joint_1 (robot_body): {
 robot_leg_1 (joint_1): {
     Q: "t(0.35 0.1 -0.09)", 
     shape:box, 
-    mass:1, 
+    mass:0.001, 
     size:[0.8, 0.08, 0.02], 
     color:[0 1 0] 
 }
@@ -48,7 +49,7 @@ joint_2 (robot_body): {
 robot_leg_2 (joint_2): {
     Q: "t(0.35 -0.1 -0.09)", 
     shape:box, 
-    mass:1, 
+    mass:0.001, 
     size:[0.8, 0.08, 0.02], 
     color:[0 1 0] 
 }
