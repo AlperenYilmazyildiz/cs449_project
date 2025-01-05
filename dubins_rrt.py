@@ -13,16 +13,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# --------------------------------------------------------------------
-# 1) PARSE ENV FROM environment.xml
-# --------------------------------------------------------------------
 def parse_mujoco_environment(xml_path="environment.xml"):
-    """
-    1) Load MuJoCo model
-    2) Find 'obs_car' => parse obstacles in 2D as (rx, ry, w, h)
-    3) Find 'agent_car' => parse half-size => agent_radius
-    4) Return bounding_box=(0,0,20,15), obstacles, agent_radius
-    """
     if not os.path.exists(xml_path):
         raise FileNotFoundError(f"Cannot find {xml_path}")
 
@@ -72,11 +63,7 @@ def _read_null_terminated(buf, start):
         result.append(chr(c))
     return "".join(result)
 
-# --------------------------------------------------------------------
-# 2) DATA STRUCTURES
-# --------------------------------------------------------------------
 class Node:
-    """Store (x,y,theta), plus cost/parent for RRT*."""
     def __init__(self, x, y, theta=0.0):
         self.x = x
         self.y = y
@@ -84,14 +71,7 @@ class Node:
         self.cost = 0.0
         self.parent = None
 
-# --------------------------------------------------------------------
-# 3) COLLISION CHECKS
-# --------------------------------------------------------------------
 def in_collision_2d(px, py, obstacles, agent_radius):
-    """
-    Each obstacle is (rx, ry, w, h).
-    We'll inflate by agent_radius => collisions if (px,py) in that inflated rect.
-    """
     for (rx, ry, w, h) in obstacles:
         rx_inf = rx - agent_radius
         ry_inf = ry - agent_radius
@@ -107,20 +87,7 @@ def check_path_collision(samples, obstacles, agent_radius):
             return True
     return False
 
-# --------------------------------------------------------------------
-# 4) MINIMAL "DUBINS-LIKE" PATH
-# --------------------------------------------------------------------
 def minimal_dubins_path(n_from, n_to, turning_radius=1.0, step_size=0.1):
-    """
-    Generate a minimal "Dubins-like" path from n_from->n_to:
-    1) Rotate in-place if needed (bounded by turning_radius => sets angle step).
-    2) Drive forward arc to approach the (n_to.x,n_to.y).
-    3) Possibly do a final in-place rotation to match n_to.theta.
-
-    Returns a list of (x,y,theta).
-    This is not full coverage of all Dubins curves, just a forward arcs approach.
-    """
-
     samples = []
 
     def append_config(cx, cy, cth):
@@ -137,14 +104,11 @@ def minimal_dubins_path(n_from, n_to, turning_radius=1.0, step_size=0.1):
         d = a-b
         return (d+math.pi)%(2*math.pi)-math.pi
 
-    # 1) rotate in-place to direction of (dx, dy)
     dx = x1 - x0
     dy = y1 - y0
     desired_angle = math.atan2(dy, dx) if (abs(dx)>1e-9 or abs(dy)>1e-9) else th0
     rot = angle_diff(desired_angle, cth)
 
-    # We'll interpret turning_radius => how quickly we can change heading
-    # If step_size is the linear step, the angle step can be step_size/turning_radius or so.
     angle_step = step_size / turning_radius
     steps_rot = int(abs(rot)/angle_step)
     steps_rot = max(1, steps_rot)
@@ -153,7 +117,6 @@ def minimal_dubins_path(n_from, n_to, turning_radius=1.0, step_size=0.1):
         cth += step_angle
         append_config(cx, cy, cth)
 
-    # 2) drive forward arc
     dist = math.hypot(dx, dy)
     if dist>1e-9:
         linear_steps = int(dist / step_size)
@@ -168,7 +131,6 @@ def minimal_dubins_path(n_from, n_to, turning_radius=1.0, step_size=0.1):
             cy += leftover*math.sin(cth)
             append_config(cx, cy, cth)
 
-    # 3) final rotate to match n_to.theta
     final_rot= angle_diff(th1, cth)
     steps_rot2= int(abs(final_rot)/angle_step)
     steps_rot2= max(1, steps_rot2)
@@ -184,13 +146,6 @@ def collision_free_dubins(n_from, n_to, obstacles, agent_radius, turning_radius=
     return not check_path_collision(samples, obstacles, agent_radius)
 
 def minimal_dubins_path_length(n_from, n_to, turning_radius=1.0):
-    """
-    Approximate length: 
-    - rotate in place => (abs(angle)/some factor) => angle * turning_radius
-    - drive => distance
-    - rotate => angle * turning_radius
-    We'll do angle-based measure + distance
-    """
     def angle_diff(a,b):
         d=a-b
         return (d+math.pi)%(2*math.pi)-math.pi
@@ -199,29 +154,18 @@ def minimal_dubins_path_length(n_from, n_to, turning_radius=1.0):
     dx= x1-x0
     dy= y1-y0
     dist= math.hypot(dx,dy)
-    # rotate to line => angle diff
     a1= angle_diff(math.atan2(dy,dx), th0)
-    # rotate final => angle diff
     a2= angle_diff(th1, math.atan2(dy,dx))
-    # total rotation => (|a1| + |a2|)* turning_radius
     return dist + turning_radius*(abs(a1)+abs(a2))
 
-# --------------------------------------------------------------------
-# 5) RRT* DUBINS
-# --------------------------------------------------------------------
 def distance_config(n1, n2):
-    """For neighbor search, do XY distance ignoring angles."""
     dx= n1.x - n2.x
     dy= n1.y - n2.y
     return math.hypot(dx, dy)
 
 def dubins_steer(n_near, n_rand, turning_radius=1.0, step_size=1.0):
-    """
-    We'll do partial extension if path is bigger than step_size.
-    """
     L= minimal_dubins_path_length(n_near, n_rand, turning_radius)
     if L> step_size:
-        # sample ratio
         ratio= step_size/L
         samples= minimal_dubins_path(n_near, n_rand, turning_radius, 0.1)
         total= len(samples)
@@ -230,7 +174,6 @@ def dubins_steer(n_near, n_rand, turning_radius=1.0, step_size=1.0):
         xmid, ymid, thmid= samples[pick_idx]
         return Node(xmid, ymid, thmid)
     else:
-        # entire path
         samples= minimal_dubins_path(n_near, n_rand, turning_radius, 0.1)
         xf, yf, thf= samples[-1]
         return Node(xf,yf, thf)
@@ -277,10 +220,6 @@ def rrt_star_dubins(
     goal_threshold=1.0,
     max_iter=300
 ):
-    """
-    Minimal RRT* with a "Dubins-like" forward arc approach
-    Yields (nodes, final_path, random_pt, new_idx) each iteration
-    """
     if not isinstance(start, Node):
         start= Node(*start)
     if not isinstance(goal, Node):
@@ -328,13 +267,10 @@ def rrt_star_dubins(
 
         rewire(nodes, neighbor_idx,new_idx,obstacles,agent_radius,turning_radius,0.1)
 
-        # check goal
         if minimal_dubins_path_length(n_new, goal, turning_radius)< goal_threshold:
-            # connect
             goal.parent= new_idx
             goal.cost  = n_new.cost+ minimal_dubins_path_length(n_new, goal, turning_radius)
             nodes.append(goal)
-            # build path
             g_idx= len(nodes)-1
             path_coords=[]
             while g_idx is not None:
@@ -349,10 +285,6 @@ def rrt_star_dubins(
 
     raise Exception("No path found with minimal Dubins RRT* after max_iter.")
 
-
-# ---------------------------------------------------
-# 6) MAIN WRAPPER
-# ---------------------------------------------------
 def run_custom_rrt_dubins(
     start=(0,0,0),
     goal=(10,10,0),
@@ -363,12 +295,6 @@ def run_custom_rrt_dubins(
     rewire_radius=2.0,
     goal_threshold=1.0
 ):
-    """
-    1) parse environment => bounding_box, obstacles, agent_radius
-    2) setup matplotlib
-    3) run rrt_star_dubins => yield iteration => live draw
-    4) return final path or raise if none
-    """
     bounding_box, obstacles, agent_radius = parse_mujoco_environment(xml_path)
     logger.info("Env bounding box=%s, #obstacles=%d, agent_radius=%.2f",
         bounding_box, len(obstacles), agent_radius)
@@ -409,7 +335,6 @@ def run_custom_rrt_dubins(
 
     try:
         for (nodes, partial_path, random_pt, new_idx) in iteration_gen:
-            # update node scatter
             nx= [nd.x for nd in nodes]
             ny= [nd.y for nd in nodes]
             nodes_plot.set_xdata(nx)
@@ -456,8 +381,6 @@ def run_custom_rrt_dubins(
         plt.show()
         raise e
 
-
-# If run directly:
 if __name__ == "__main__":
     try:
         path = run_custom_rrt_dubins(

@@ -1,22 +1,11 @@
 import random
 
 def col_type(col_index: int) -> str:
-    """
-    Determine whether a given column index should be Parking (S) or Road (H)
-    based on the desired repeating pattern:
-
-    - col=0 -> S
-    - col=1 -> H
-    - Then repeating groups of size 3: (S, S, H).
-
-    So columns (2,3) -> S, col=4 -> H, columns (5,6) -> S, col=7 -> H, etc.
-    """
     if col_index == 0:
         return 'S'
     elif col_index == 1:
         return 'H'
     else:
-        # For col >= 2, repeat blocks of length 3 => (S, S, H)
         offset = (col_index - 2) % 3
         return 'S' if offset < 2 else 'H'
 
@@ -29,16 +18,10 @@ def create_layout_by_col(
     agent_col: int,
     place_agent: bool = True,
 ) -> list:
-    """
-    Create a matrix of size (rows x total_cols). For each column c, we determine if it's
-    a parking column (S) or road column (H) using col_type(c).
+   
+    # Create a matrix of size (rows x total_cols). For each column c, we determine if it's
+    # a parking column (S) or road column (H) using col_type(c).
 
-    - If col_type(c) == 'H', every tile in that column is 'H'.
-    - If col_type(c) == 'S', we randomize each tile in that column as '0' or '1' with probability object_probability.
-    - Optionally place 'T' at (agent_row, agent_col), overriding '0'/'1'.
-
-    Returns the final matrix of strings: 'H', '0', '1', or 'T'.
-    """
     agent_row = rows
     agent_col = 0
 
@@ -46,7 +29,7 @@ def create_layout_by_col(
     for r in range(rows):
         row_data = []
         for c in range(total_cols):
-            ctype = col_type(c)  # 'S' or 'H'
+            ctype = col_type(c)  
             if ctype == 'H':
                 row_data.append('H')
             else:
@@ -55,11 +38,11 @@ def create_layout_by_col(
                 row_data.append(has_car)
         matrix.append(row_data)
 
-    # Add 2 rows and make them 'H' (for the bottom)
+    # Add 2 rows and make them H for the bottom
     for _ in range(2):
         matrix.append(['H'] * total_cols)
 
-    # Place an agent 'T' if desired (in bounds)
+    # Place an agent T if desired in bounds
     if place_agent:
         if 0 <= agent_row < len(matrix) and 0 <= agent_col < len(matrix[0]):
             matrix[agent_row][agent_col] = 'T'
@@ -75,21 +58,12 @@ def generate_mujoco_xml(
     object_dims=(2, 1.5, 1),
     offset=0.5,
 ):
-    """
-    Creates a MuJoCo XML with:
-      - A floor
-      - Box geoms for each tile
-      - Obstacle <body> for any tile=='1'
-      - A single agent car if tile=='T'
-    and writes it to `xml_filename`.
-    """
-
+    
     rows = len(matrix)
     cols = len(matrix[0]) if rows > 0 else 0
 
-    # Colors for tile
-    color_parking = "0.5 0.7 1 1"  # bluish
-    color_road = "0.6 0.6 0.6 1"  # gray
+    color_parking = "0.5 0.7 1 1" 
+    color_road = "0.6 0.6 0.6 1" 
 
     half_obj_x = object_dims[0] / 2.0
     half_obj_y = object_dims[1] / 2.0
@@ -122,11 +96,11 @@ def generate_mujoco_xml(
     for r in range(rows):
         for c in range(cols):
             cell = matrix[r][c]
-            if cell in ['0', '1']:  # Parking tile
+            if cell in ['0', '1']:  
                 tile_w, tile_h = parking_dims
                 color = color_parking
                 tile_name = f"parking_space_{r}_{c}"
-            else:  # Road tile
+            else: 
                 tile_w, tile_h = road_dims
                 color = color_road
                 tile_name = f"road_{r}_{c}"
@@ -141,7 +115,6 @@ def generate_mujoco_xml(
             xml_lines.append(f'              size="{half_x} {half_y} 0.01"')
             xml_lines.append(f'              rgba="{color}" />')
 
-    # Obstacles for tile=='1'
     for r in range(rows):
         for c in range(cols):
             if matrix[r][c] == '1':
@@ -153,7 +126,6 @@ def generate_mujoco_xml(
                 xml_lines.append(f'            <geom name="{body_name}_geom" type="box" size="{half_obj_x} {half_obj_y} {half_obj_z}" rgba="0.4 0.4 0.4 1" />')
                 xml_lines.append('        </body>')
 
-    # Agent if tile=='T'
     agent_r = agent_c = None
     for rr in range(rows):
         for cc in range(cols):
@@ -229,41 +201,7 @@ def main(
     agent_col: int = 0,
     xml_filename: str = "environment.xml",
 ):
-    """
-    Main function to create a matrix by column pattern:
-      - col=0 => parking
-      - col=1 => road
-      - col>=2 => repeating blocks of (S,S,H) every 3 columns
-
-    For each 'S' column, random occupancy of 0 or 1. Optionally place 'T' in one cell.
-    Then generate a MuJoCo XML with or without the agent (T).
-    
-    Parameters
-    ----------
-    rows : int
-        Number of rows in the layout.
-    total_cols : int
-        Number of columns in the layout.
-    object_probability : float
-        Probability that a parking cell (S) is occupied by a car (1).
-    object_dims : tuple
-        (length, width, height) of obstacle cars.
-    offset : float
-        Spacing offset (not heavily used in the code, but kept for consistency).
-    parking_dims : tuple
-        (width, height) for parking columns.
-    road_dims : tuple
-        (width, height) for road columns.
-    place_agent : bool
-        Whether to place an agent 'T'.
-    agent_row : int
-        The row index of the agent.
-    agent_col : int
-        The column index of the agent.
-    xml_filename : str
-        Output filename for the MuJoCo XML.
-    """
-
+   
     final_matrix = create_layout_by_col(
         rows=rows,
         total_cols=total_cols,
@@ -273,13 +211,11 @@ def main(
         agent_col=agent_col,
     )
 
-    # Print the final matrix
     print("Final Layout Matrix:")
     for row in final_matrix:
         print(" ".join(row))
     print()
 
-    # Generate MuJoCo XML
     generate_mujoco_xml(
         matrix=final_matrix,
         xml_filename=xml_filename,
@@ -288,10 +224,8 @@ def main(
         object_dims=object_dims,
         offset=offset
     )
-    print(f"[INFO] Wrote environment to {xml_filename}")
+    print(f"INFO Wrote environment to {xml_filename}")
 
-
-# Example usage if you run this script directly:
 if __name__ == "__main__":
     main(
         rows=5,

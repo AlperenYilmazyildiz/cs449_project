@@ -13,16 +13,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# --------------------------------------------------------------------
-# 1) ENVIRONMENT PARSING (MuJoCo)
-# --------------------------------------------------------------------
+
 def parse_mujoco_environment(model):
-    """
-    1) Load MuJoCo model
-    2) Identify bodies named 'obs_car' => parse obstacles in 2D
-    3) Identify 'agent_car' => parse agent half-size => agent_radius
-    4) Return bounding_box=(0,0,20,15), obstacles=[(rx,ry,w,h)], agent_radius
-    """
     bounding_box = (0, 0, 20, 15)
     obstacles = []
     agent_radius = 0.8
@@ -66,9 +58,6 @@ def _read_null_terminated(buf, start):
         out.append(chr(c))
     return "".join(out)
 
-# --------------------------------------------------------------------
-# 2) RRT* NODE (x,y,theta)
-# --------------------------------------------------------------------
 class RSNode:
     def __init__(self, x, y, theta=0.0):
         self.x = x
@@ -77,11 +66,7 @@ class RSNode:
         self.cost = 0.0
         self.parent = None
 
-# --------------------------------------------------------------------
-# 3) COLLISION CHECK
-# --------------------------------------------------------------------
 def in_collision_2d(px, py, obstacles, agent_radius):
-    """Check if (px, py) is in collision with any obstacle rectangle, inflated by agent_radius."""
     for (rx, ry, w, h) in obstacles:
         rx_inf = rx - agent_radius
         ry_inf = ry - agent_radius
@@ -92,37 +77,12 @@ def in_collision_2d(px, py, obstacles, agent_radius):
     return False
 
 def check_path_collision(samples, obstacles, agent_radius):
-    """Check if any sample in path is in collision."""
     for (sx, sy, sth) in samples:
         if in_collision_2d(sx, sy, obstacles, agent_radius):
             return True
     return False
 
-# --------------------------------------------------------------------
-# 4) MINIMAL REEDS-SHEPP IMPLEMENTATION
-# --------------------------------------------------------------------
-#
-# This is a simplified approach that handles forward/backward arcs plus in-place turns.
-# For a robust approach, see a full Reeds-Shepp library.
-#
-
 def sample_reeds_shepp_path(n_from, n_to, turning_radius=1.0, step_size=0.1):
-    """
-    Returns a list of (x,y,theta) from n_from->n_to 
-    using a minimal Reeds-Shepp approach with forward/back arcs.
-    For simplicity, we only implement a few basic maneuvers:
-      - forward arc
-      - backward arc
-      - in-place rotation
-
-    This is NOT a complete Reeds-Shepp coverage. 
-    But enough to illustrate a forward/back approach.
-    """
-    # We'll do a naive approach: 
-    # 1) rotate in-place to align heading to the direction of (n_to.x - n_from.x, n_to.y - n_from.y)
-    # 2) go forward/back to the target x,y
-    # 3) rotate in-place to target yaw
-
     path_samples = []
 
     def append_arc(cx, cy, cth):
@@ -132,14 +92,12 @@ def sample_reeds_shepp_path(n_from, n_to, turning_radius=1.0, step_size=0.1):
     x0, y0, th0 = n_from.x, n_from.y, n_from.theta
     x1, y1, th1 = n_to.x,   n_to.y,   n_to.theta
 
-    # 1) rotate to desired direction
     dx = x1 - x0
     dy = y1 - y0
     desired_dir = math.atan2(dy, dx) if (abs(dx)>1e-9 or abs(dy)>1e-9) else th0
     rot_diff = angle_diff(desired_dir, th0)
-    # We'll rotate in-place step by step
     sign = 1 if rot_diff>0 else -1
-    rot_steps = int(abs(rot_diff) / (step_size/turning_radius))  # step_size used as a small angle step
+    rot_steps = int(abs(rot_diff) / (step_size/turning_radius))  
     if rot_steps < 1:
         rot_steps = 1
     angle_inc = rot_diff/rot_steps
@@ -149,14 +107,13 @@ def sample_reeds_shepp_path(n_from, n_to, turning_radius=1.0, step_size=0.1):
         cth += angle_inc
         append_arc(cx, cy, cth)
 
-    # 2) drive forward/back
+    # drive forward/back
     dist = math.hypot(dx, dy)
     forward = (dist > 0.0)
     step_dist = step_size
     if forward:
         sign_fb = 1.0
     else:
-        # If dist==0, skip
         sign_fb = 1.0
     steps_lin = int(dist/step_dist)
     if steps_lin < 1:
@@ -174,7 +131,7 @@ def sample_reeds_shepp_path(n_from, n_to, turning_radius=1.0, step_size=0.1):
         cy += leftover*math.sin(cth)
         append_arc(cx, cy, cth)
 
-    # 3) rotate in-place to final yaw
+    # rotate in-place to final yaw
     final_rot = angle_diff(th1, cth)
     sign2 = 1 if final_rot>0 else -1
     rot_steps2 = int(abs(final_rot)/(step_size/turning_radius))
@@ -193,11 +150,6 @@ def angle_diff(a, b):
     return (d+math.pi)%(2*math.pi)-math.pi
 
 def reeds_shepp_path_length(n_from, n_to, turning_radius=1.0):
-    """
-    Approximate length from n_from->n_to in the minimal approach: 
-     - rotation dist + linear dist + rotation dist
-    We'll treat rotation as (abs(angle)/some factor).
-    """
     x0, y0, th0 = n_from.x, n_from.y, n_from.theta
     x1, y1, th1 = n_to.x,   n_to.y,   n_to.theta
     dx = x1-x0
@@ -214,22 +166,14 @@ def collision_free_reeds_shepp(n_from, n_to, obstacles, agent_radius, turning_ra
     return not check_path_collision(samples, obstacles, agent_radius)
 
 
-# --------------------------------------------------------------------
-# 5) RRT* with minimal Reeds-Shepp
-# --------------------------------------------------------------------
 def distance_config(n1, n2):
-    """For neighbor search, do XY distance ignoring angles."""
     dx = n1.x - n2.x
     dy = n1.y - n2.y
     return math.hypot(dx, dy)
 
 def reeds_shepp_steer(n_near, n_rand, turning_radius=1.0, step_size=1.0):
-    """
-    Partial extension if the path is longer than step_size.
-    """
     L = reeds_shepp_path_length(n_near, n_rand, turning_radius)
     if L> step_size:
-        # sample at step_size
         ratio = step_size / L
         samples = sample_reeds_shepp_path(n_near, n_rand, turning_radius, 0.1)
         total = len(samples)
@@ -240,7 +184,6 @@ def reeds_shepp_steer(n_near, n_rand, turning_radius=1.0, step_size=1.0):
             xmid, ymid, thmid = samples[-1]
         return RSNode(xmid, ymid, thmid)
     else:
-        # entire path is smaller => do full
         samples = sample_reeds_shepp_path(n_near, n_rand, turning_radius, 0.1)
         xf, yf, thf = samples[-1]
         return RSNode(xf, yf, thf)
@@ -288,9 +231,6 @@ def rrt_star_reeds_shepp(
     goal_threshold=1.0,
     max_iter=300
 ):
-    """
-    Yields (nodes, final_path, random_pt, new_idx) each iteration.
-    """
     if not isinstance(start, RSNode):
         start = RSNode(*start)
     if not isinstance(goal, RSNode):
@@ -355,19 +295,12 @@ def rrt_star_reeds_shepp(
             yield nodes, path_coords, None, None
             return
 
-        # Yield intermediate results for visualization
         yield nodes, None, (rx, ry), new_idx
 
-    # Raise an exception if the goal is not reached within the maximum iterations
     raise Exception("No path found with ReedsShepp RRT* after max_iter.")
 
-
-
-# --------------------------------------------------------------------
-# 6) MAIN WRAPPER for TAMP usage
-# --------------------------------------------------------------------
 def rrt_reeds_shepp_algorithm(
-    start=None,  # Default to None to indicate the start is taken from the model
+    start=None,  
     goal=None,
     model=None,
     max_iter=500,
@@ -377,22 +310,14 @@ def rrt_reeds_shepp_algorithm(
     goal_threshold=1.0,
     visualize=True
 ):
-    """
-    1) Parse environment => bounding_box, obstacles, agent_radius
-    2) If start is None, take the starting position from the model
-    3) Visualize environment if `visualize` is True
-    4) Run rrt_star_reeds_shepp => yield => dynamic plot
-    5) Return final path or raise if none
-    """
     bounding_box, obstacles, agent_radius = parse_mujoco_environment(model)
 
-    # Take starting position from the model if not specified
     if start is None:
         for b in range(model.nbody):
             if _read_body_name(model, b).startswith("agent_car"):
                 start_x = model.body_pos[b, 0]
                 start_y = model.body_pos[b, 1]
-                start_theta = 0.0  # Default orientation
+                start_theta = 0.0  
                 start = (start_x, start_y, start_theta)
                 logger.info("Start position taken from model: (%.2f, %.2f, %.2f)", start_x, start_y, start_theta)
                 break
@@ -491,7 +416,6 @@ def rrt_reeds_shepp_algorithm(
             plt.show()
         raise e
 
-# If run directly:
 if __name__=="__main__":
     model = mujoco.MjModel.from_xml_path('environment.xml')
     path = rrt_reeds_shepp_algorithm(

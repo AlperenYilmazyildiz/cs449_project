@@ -9,14 +9,11 @@ from reeds_shepp_rrt import rrt_reeds_shepp_algorithm
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,  # or INFO, WARNING, etc.
+    level=logging.DEBUG, 
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------
-# Nearest Parking Spot
-# ---------------------------------------------------
 def nearest_empty_parking_space_point(model, data):
     agent_x = data.qpos[0]
     agent_y = data.qpos[1]
@@ -69,9 +66,7 @@ def _read_null_terminated(byte_buf, start):
         out.append(chr(c))
     return "".join(out)
 
-# ---------------------------------------------------
-# Spline Fitting and Sampling
-# ---------------------------------------------------
+
 def fit_spline_to_path(path, smoothing_factor=0.1):
     x = [p[0] for p in path]
     y = [p[1] for p in path]
@@ -85,20 +80,7 @@ def sample_spline_with_margin(spl_x, spl_y, num_points=20):
     sampled_path = [(spl_x(ti), spl_y(ti)) for ti in t]
     return sampled_path
 
-# ---------------------------------------------------
-# Path Following
-# ---------------------------------------------------
 def follow_spline_with_constant_speed(model, data, sampled_path, margin=0.5, viewer=None):
-    """
-    Moves the agent toward each sampled point along the spline with a constant speed.
-
-    Args:
-        model: MuJoCo model.
-        data: MuJoCo data.
-        sampled_path: List of (x, y) points to follow.
-        margin: Margin of error for considering a point "reached."
-        viewer: MuJoCo viewer for visualization (optional).
-    """
     max_steer_angle = math.radians(60.0)
     constant_speed = 0.5
     steer_kp = 1
@@ -157,9 +139,6 @@ def follow_spline_with_constant_speed(model, data, sampled_path, margin=0.5, vie
         if viewer and viewer.is_alive:
             viewer.render()
 
-# ---------------------------------------------------
-# Main Function
-# ---------------------------------------------------
 def main():
     logger.info("Loading MuJoCo model...")
     model = mujoco.MjModel.from_xml_path("environment.xml")
