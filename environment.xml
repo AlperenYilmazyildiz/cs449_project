@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mujoco model="parking_env">
+    <compiler angle="radian" coordinate="local" inertiafromgeom="true"/>
+    <option timestep="0.01" gravity="0 0 -9.81" iterations="50" />
+
+    <default>
+        <geom contype="1" conaffinity="1" condim="3" friction="1 0.1 0.1" rgba="0.8 0.8 0.8 1"/>
+        <joint damping="0.1" limited="true"/>
+        <motor ctrllimited="true" ctrlrange="-1 1"/>
+    </default>
+
+    <worldbody>
+        <!-- Cameras -->
+        <camera name="overhead" pos="0 0 30" euler="0 0 0" mode="fixed"/>
+        <camera name="angled" pos="15 15 15" euler="-45 0 45" mode="fixed"/>
+
+        <!-- Light -->
+        <light directional="true" diffuse="0.7 0.7 0.7" pos="5 5 10"/>
+
+        <!-- Floor -->
+        <geom name="floor" type="plane" pos="0 0 0" size="50 50 1" rgba="0.9 0.9 0.9 1"/>
+
+        <geom name="tile_0_0" type="box"
+              pos="0.0 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_0_1" type="box"
+              pos="2.5 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_0_2" type="box"
+              pos="5.0 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_0_3" type="box"
+              pos="7.5 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_0_4" type="box"
+              pos="10.0 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_0_5" type="box"
+              pos="12.5 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_0_6" type="box"
+              pos="15.0 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_0_7" type="box"
+              pos="17.5 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_0_8" type="box"
+              pos="20.0 0.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_1_0" type="box"
+              pos="0.0 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_1_1" type="box"
+              pos="2.5 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_1_2" type="box"
+              pos="5.0 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_1_3" type="box"
+              pos="7.5 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_1_4" type="box"
+              pos="10.0 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_1_5" type="box"
+              pos="12.5 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_1_6" type="box"
+              pos="15.0 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_1_7" type="box"
+              pos="17.5 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_1_8" type="box"
+              pos="20.0 2.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_2_0" type="box"
+              pos="0.0 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_2_1" type="box"
+              pos="2.5 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_2_2" type="box"
+              pos="5.0 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_2_3" type="box"
+              pos="7.5 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_2_4" type="box"
+              pos="10.0 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_2_5" type="box"
+              pos="12.5 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_2_6" type="box"
+              pos="15.0 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_2_7" type="box"
+              pos="17.5 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_2_8" type="box"
+              pos="20.0 5.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_3_0" type="box"
+              pos="0.0 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_3_1" type="box"
+              pos="2.5 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_3_2" type="box"
+              pos="5.0 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_3_3" type="box"
+              pos="7.5 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_3_4" type="box"
+              pos="10.0 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_3_5" type="box"
+              pos="12.5 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_3_6" type="box"
+              pos="15.0 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_3_7" type="box"
+              pos="17.5 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_3_8" type="box"
+              pos="20.0 7.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_4_0" type="box"
+              pos="0.0 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_4_1" type="box"
+              pos="2.5 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_4_2" type="box"
+              pos="5.0 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_4_3" type="box"
+              pos="7.5 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_4_4" type="box"
+              pos="10.0 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_4_5" type="box"
+              pos="12.5 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_4_6" type="box"
+              pos="15.0 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_4_7" type="box"
+              pos="17.5 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_4_8" type="box"
+              pos="20.0 10.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.5 0.7 1 1" />
+        <geom name="tile_5_0" type="box"
+              pos="0.0 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_5_1" type="box"
+              pos="2.5 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_5_2" type="box"
+              pos="5.0 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_5_3" type="box"
+              pos="7.5 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_5_4" type="box"
+              pos="10.0 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_5_5" type="box"
+              pos="12.5 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_5_6" type="box"
+              pos="15.0 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_5_7" type="box"
+              pos="17.5 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_5_8" type="box"
+              pos="20.0 12.5 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_0" type="box"
+              pos="0.0 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_1" type="box"
+              pos="2.5 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_2" type="box"
+              pos="5.0 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_3" type="box"
+              pos="7.5 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_4" type="box"
+              pos="10.0 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_5" type="box"
+              pos="12.5 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_6" type="box"
+              pos="15.0 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_7" type="box"
+              pos="17.5 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <geom name="tile_6_8" type="box"
+              pos="20.0 15.0 0.0"
+              size="1.25 1.25 0.01"
+              rgba="0.6 0.6 0.6 1" />
+        <body name="obs_car_0_0" pos="0.0 0.0 0.5">
+            <geom name="obs_car_0_0_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_0_3" pos="7.5 0.0 0.5">
+            <geom name="obs_car_0_3_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_0_6" pos="15.0 0.0 0.5">
+            <geom name="obs_car_0_6_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_0_8" pos="20.0 0.0 0.5">
+            <geom name="obs_car_0_8_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_1_3" pos="7.5 2.5 0.5">
+            <geom name="obs_car_1_3_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_1_6" pos="15.0 2.5 0.5">
+            <geom name="obs_car_1_6_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_1_8" pos="20.0 2.5 0.5">
+            <geom name="obs_car_1_8_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_2_0" pos="0.0 5.0 0.5">
+            <geom name="obs_car_2_0_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_3_2" pos="5.0 7.5 0.5">
+            <geom name="obs_car_3_2_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_3_3" pos="7.5 7.5 0.5">
+            <geom name="obs_car_3_3_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_3_5" pos="12.5 7.5 0.5">
+            <geom name="obs_car_3_5_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_3_6" pos="15.0 7.5 0.5">
+            <geom name="obs_car_3_6_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_3_8" pos="20.0 7.5 0.5">
+            <geom name="obs_car_3_8_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_4_3" pos="7.5 10.0 0.5">
+            <geom name="obs_car_4_3_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+        <body name="obs_car_4_6" pos="15.0 10.0 0.5">
+            <geom name="obs_car_4_6_geom" type="box" size="1.0 0.75 0.5" rgba="0.4 0.4 0.4 1" />
+        </body>
+
+        <!-- Agent Car -->
+        <body name="agent_car" pos="0.0 12.5 0.6" euler="0 0 0">
+            <geom name="agent_car_chassis" type="box" size="1 0.7 0.4" rgba="0 0.6 0.3 1" />
+            <joint name="agent_car_free" type="free"/>
+
+            <!-- FRONT LEFT WHEEL -->
+            <body name="front_left_wheel" pos="0.6 0.6 -0.4">
+                <joint name="steer_left_joint" type="hinge" axis="0 1 1" range="-0.6 0.6"/>
+                <geom name="front_left_wheel_geom" type="cylinder" size="0.3 0.1" euler="1.5708 0 0" rgba="0.1 0.1 0.1 1"/>
+            </body>
+
+            <!-- FRONT RIGHT WHEEL -->
+            <body name="front_right_wheel" pos="0.6 -0.6 -0.4">
+                <joint name="steer_right_joint" type="hinge" axis="0 1 1" range="-0.6 0.6"/>
+                <geom name="front_right_wheel_geom" type="cylinder" size="0.3 0.1" euler="1.5708 0 0" rgba="0.1 0.1 0.1 1"/>
+            </body>
+
+            <!-- REAR LEFT WHEEL -->
+            <body name="rear_left_wheel" pos="-0.6 0.6 -0.4">
+                <joint name="drive_left_joint" type="hinge" axis="0 1 0" range="-999 999"/>
+                <geom name="rear_left_wheel_geom" type="cylinder" size="0.3 0.1" euler="1.5708 0 0" rgba="0.1 0.1 0.1 1"/>
+            </body>
+
+            <!-- REAR RIGHT WHEEL -->
+            <body name="rear_right_wheel" pos="-0.6 -0.6 -0.4">
+                <joint name="drive_right_joint" type="hinge" axis="0 1 0" range="-999 999"/>
+                <geom name="rear_right_wheel_geom" type="cylinder" size="0.3 0.1" euler="1.5708 0 0" rgba="0.1 0.1 0.1 1"/>
+            </body>
+        </body>
+
+    </worldbody>
+
+    <actuator>
+        <motor name="steer_left_motor" joint="steer_left_joint" gear="1"/>
+        <motor name="steer_right_motor" joint="steer_right_joint" gear="1"/>
+        <motor name="drive_left_motor" joint="drive_left_joint" gear="100"/>
+        <motor name="drive_right_motor" joint="drive_right_joint" gear="100"/>
+    </actuator>
+</mujoco>
