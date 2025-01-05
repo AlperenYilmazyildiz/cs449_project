@@ -1,26 +1,10 @@
-#!/usr/bin/env python3
-"""
-custom_rrt_reeds_shepp.py
-
-- Single-file solution for RRT* with Reeds-Shepp paths
-- WITHOUT requiring pyReedsShepp library
-- Minimal internal Reeds-Shepp approach (forward + backward arcs)
-- Parses obstacles & agent dimension from environment.xml via MuJoCo
-- Returns a final path in (x, y)
-
-Author: ChatGPT
-Date: ...
-"""
-
 import os
 import math
 import random
 import logging
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
 import mujoco
 
 logging.basicConfig(
@@ -32,21 +16,16 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------------------------
 # 1) ENVIRONMENT PARSING (MuJoCo)
 # --------------------------------------------------------------------
-def parse_mujoco_environment(xml_path="environment.xml"):
+def parse_mujoco_environment(model):
     """
     1) Load MuJoCo model
     2) Identify bodies named 'obs_car' => parse obstacles in 2D
     3) Identify 'agent_car' => parse agent half-size => agent_radius
     4) Return bounding_box=(0,0,20,15), obstacles=[(rx,ry,w,h)], agent_radius
     """
-    if not os.path.exists(xml_path):
-        raise FileNotFoundError(f"Cannot find {xml_path}")
-
-    model = mujoco.MjModel.from_xml_path(xml_path)
-
     bounding_box = (0, 0, 20, 15)
     obstacles = []
-    agent_radius = 0.5
+    agent_radius = 0.8
     agent_found  = False
 
     for b in range(model.nbody):
@@ -302,7 +281,7 @@ def rrt_star_reeds_shepp(
     start, goal,
     obstacles,
     bounding_box,
-    agent_radius=0.5,
+    agent_radius=0.8,
     turning_radius=1.0,
     step_size=1.0,
     rewire_radius=2.0,
@@ -323,108 +302,129 @@ def rrt_star_reeds_shepp(
     (xmin, ymin, xmax, ymax)= bounding_box
 
     for iteration in range(max_iter):
-        rx= random.uniform(xmin, xmax)
-        ry= random.uniform(ymin, ymax)
-        rth=random.uniform(-math.pi, math.pi)
-        n_rand= RSNode(rx,ry,rth)
+        if iteration % 10 == 0:
+            n_rand = goal
+            rx, ry, rth = goal.x, goal.y, goal.theta
+        else:
+            rx = random.uniform(xmin, xmax)
+            ry = random.uniform(ymin, ymax)
+            rth = random.uniform(-math.pi, math.pi)
+            n_rand = RSNode(rx, ry, rth)
 
-        # nearest
-        dlist= [distance_config(n_rand, nd) for nd in nodes]
-        idx_near= np.argmin(dlist)
-        n_near= nodes[idx_near]
+        # Find the nearest node
+        dlist = [distance_config(n_rand, nd) for nd in nodes]
+        idx_near = np.argmin(dlist)
+        n_near = nodes[idx_near]
 
-        # steer partial
+        # Steer towards the random node
         n_new = reeds_shepp_steer(n_near, n_rand, turning_radius, step_size)
-        # collision check
+
+        # Collision check
         if not collision_free_reeds_shepp(n_near, n_new, obstacles, agent_radius, turning_radius, 0.1):
             yield nodes, None, (rx, ry), None
             continue
 
-        # neighbors
-        neighbor_idx= get_neighbors(nodes, n_new, obstacles, agent_radius, rewire_radius, turning_radius, 0.1)
-        # choose parent
-        best_parent= idx_near
-        best_cost  = n_near.cost + reeds_shepp_path_length(n_near, n_new, turning_radius)
-        for idx in neighbor_idx:
-            nd= nodes[idx]
-            c_via= nd.cost + reeds_shepp_path_length(nd, n_new, turning_radius)
-            if c_via< best_cost:
-                best_cost= c_via
-                best_parent= idx
-
-        n_new.parent= best_parent
-        n_new.cost  = best_cost
-        new_idx= len(nodes)
+        # Add the new node to the tree
+        neighbor_idx = get_neighbors(nodes, n_new, obstacles, agent_radius, rewire_radius, turning_radius, 0.1)
+        best_parent, best_cost = choose_parent(nodes, neighbor_idx, n_new, obstacles, agent_radius, turning_radius, 0.1)
+        n_new.parent = best_parent
+        n_new.cost = best_cost
+        new_idx = len(nodes)
         nodes.append(n_new)
 
-        # rewire
+        # Rewire the tree
         rewire(nodes, neighbor_idx, new_idx, obstacles, agent_radius, turning_radius, 0.1)
 
-        # check goal
-        if reeds_shepp_path_length(n_new, goal, turning_radius)< goal_threshold:
-            # connect to goal
-            goal.parent= new_idx
-            goal.cost  = n_new.cost+ reeds_shepp_path_length(n_new, goal, turning_radius)
+        # Check if the new node is within the goal threshold
+        if reeds_shepp_path_length(n_new, goal, turning_radius) < goal_threshold:
+            # Connect to the goal
+            goal.parent = new_idx
+            goal.cost = n_new.cost + reeds_shepp_path_length(n_new, goal, turning_radius)
             nodes.append(goal)
-            # build final
-            g_idx= len(nodes)-1
-            path_coords=[]
+
+            # Build the final path
+            g_idx = len(nodes) - 1
+            path_coords = []
             while g_idx is not None:
-                nd= nodes[g_idx]
+                nd = nodes[g_idx]
                 path_coords.append((nd.x, nd.y))
-                g_idx= nd.parent
+                g_idx = nd.parent
             path_coords.reverse()
+
+            # Yield the result and exit
             yield nodes, path_coords, None, None
             return
 
-        yield nodes, None, (rx,ry), new_idx
+        # Yield intermediate results for visualization
+        yield nodes, None, (rx, ry), new_idx
 
+    # Raise an exception if the goal is not reached within the maximum iterations
     raise Exception("No path found with ReedsShepp RRT* after max_iter.")
+
 
 
 # --------------------------------------------------------------------
 # 6) MAIN WRAPPER for TAMP usage
 # --------------------------------------------------------------------
-def run_custom_rrt_reeds_shepp(
-    start=(0,0,0),
-    goal=(10,10,0),
-    xml_path="environment.xml",
-    max_iter=300,
+def rrt_reeds_shepp_algorithm(
+    start=None,  # Default to None to indicate the start is taken from the model
+    goal=None,
+    model=None,
+    max_iter=500,
     step_size=1.0,
     turning_radius=1.0,
     rewire_radius=2.0,
-    goal_threshold=1.0
+    goal_threshold=1.0,
+    visualize=True
 ):
     """
-    1) parse environment => bounding_box, obstacles, agent_radius
-    2) visualize environment
-    3) run rrt_star_reeds_shepp => yield => dynamic plot
-    4) return final path or raise if none
+    1) Parse environment => bounding_box, obstacles, agent_radius
+    2) If start is None, take the starting position from the model
+    3) Visualize environment if `visualize` is True
+    4) Run rrt_star_reeds_shepp => yield => dynamic plot
+    5) Return final path or raise if none
     """
-    bounding_box, obstacles, agent_radius = parse_mujoco_environment(xml_path)
-    logger.info("Parsed environment => bounding_box=%s, #obstacles=%d, agent_radius=%.2f",
-        bounding_box, len(obstacles), agent_radius)
+    bounding_box, obstacles, agent_radius = parse_mujoco_environment(model)
 
-    fig, ax = plt.subplots(figsize=(8,6))
-    plt.ion()
-    plt.show()
+    # Take starting position from the model if not specified
+    if start is None:
+        for b in range(model.nbody):
+            if _read_body_name(model, b).startswith("agent_car"):
+                start_x = model.body_pos[b, 0]
+                start_y = model.body_pos[b, 1]
+                start_theta = 0.0  # Default orientation
+                start = (start_x, start_y, start_theta)
+                logger.info("Start position taken from model: (%.2f, %.2f, %.2f)", start_x, start_y, start_theta)
+                break
+        else:
+            raise ValueError("Agent start position not found in the model. Ensure 'agent_car' exists.")
 
-    # draw environment
-    (xmin,ymin,xmax,ymax)= bounding_box
-    ax.set_xlim(xmin, xmax)
-    ax.set_ylim(ymin, ymax)
-    ax.set_aspect('equal','box')
-    for (rx,ry,w,h) in obstacles:
-        rect=patches.Rectangle((rx,ry), w,h, color='black', alpha=0.6)
-        ax.add_patch(rect)
-    ax.plot(start[0], start[1], 'ro', label='Start')
-    ax.plot(goal[0],  goal[1],  'g*', label='Goal')
-    ax.set_title("RRT* ReedsShepp Minimal")
+    logger.info(
+        "Parsed environment => bounding_box=%s, #obstacles=%d, agent_radius=%.2f",
+        bounding_box, len(obstacles), agent_radius
+    )
 
-    node_scatter,= ax.plot([],[],'bo',markersize=3,label='Nodes')
-    rand_pt_plot,= ax.plot([],[],'rx',label='Random')
-    path_plot,   = ax.plot([],[],'r-',linewidth=2,label='Path')
-    line_objs    = []
+    if visualize:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        plt.ion()
+        plt.show()
+
+        # Draw environment
+        (xmin, ymin, xmax, ymax) = bounding_box
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
+        ax.set_aspect('equal', 'box')
+        for (rx, ry, w, h) in obstacles:
+            rect = patches.Rectangle((rx, ry), w, h, color='black', alpha=0.6)
+            ax.add_patch(rect)
+        ax.plot(start[0], start[1], 'ro', label='Start')
+        ax.plot(goal[0], goal[1], 'g*', label='Goal')
+        ax.set_title("RRT* ReedsShepp Minimal")
+
+        node_scatter, = ax.plot([], [], 'bo', markersize=3, label='Nodes')
+        rand_pt_plot, = ax.plot([], [], 'rx', label='Random')
+        path_plot, = ax.plot([], [], 'r-', linewidth=2, label='Path')
+        line_objs = []
 
     iteration_gen = rrt_star_reeds_shepp(
         start, goal, obstacles, bounding_box,
@@ -436,69 +436,72 @@ def run_custom_rrt_reeds_shepp(
         max_iter=max_iter
     )
 
-    final_path_coords= None
+    final_path_coords = None
     try:
         for (nodes, partial_path, random_pt, new_idx) in iteration_gen:
-            # update node scatter
-            nx= [nd.x for nd in nodes]
-            ny= [nd.y for nd in nodes]
-            node_scatter.set_xdata(nx)
-            node_scatter.set_ydata(ny)
+            if visualize:
+                # Update node scatter
+                nx = [nd.x for nd in nodes]
+                ny = [nd.y for nd in nodes]
+                node_scatter.set_xdata(nx)
+                node_scatter.set_ydata(ny)
 
-            # random
-            if random_pt:
-                rx, ry= random_pt
-                rand_pt_plot.set_xdata([rx])
-                rand_pt_plot.set_ydata([ry])
-            else:
-                rand_pt_plot.set_xdata([])
-                rand_pt_plot.set_ydata([])
+                # Random point
+                if random_pt:
+                    rx, ry = random_pt
+                    rand_pt_plot.set_xdata([rx])
+                    rand_pt_plot.set_ydata([ry])
+                else:
+                    rand_pt_plot.set_xdata([])
+                    rand_pt_plot.set_ydata([])
 
-            # remove old lines, draw tree
-            for ln in line_objs:
-                ln.remove()
-            line_objs.clear()
-            for i, nd in enumerate(nodes):
-                if nd.parent is not None:
-                    p= nodes[nd.parent]
-                    ln,= ax.plot([nd.x,p.x],[nd.y,p.y],color='green',linewidth=0.7)
-                    line_objs.append(ln)
+                # Remove old lines, draw tree
+                for ln in line_objs:
+                    ln.remove()
+                line_objs.clear()
+                for i, nd in enumerate(nodes):
+                    if nd.parent is not None:
+                        p = nodes[nd.parent]
+                        ln, = ax.plot([nd.x, p.x], [nd.y, p.y], color='green', linewidth=0.7)
+                        line_objs.append(ln)
 
-            # final path
-            if partial_path:
-                px= [p[0] for p in partial_path]
-                py= [p[1] for p in partial_path]
-                path_plot.set_xdata(px)
-                path_plot.set_ydata(py)
-                final_path_coords= partial_path
+                # Final path
+                if partial_path:
+                    px = [p[0] for p in partial_path]
+                    py = [p[1] for p in partial_path]
+                    path_plot.set_xdata(px)
+                    path_plot.set_ydata(py)
+                    final_path_coords = partial_path
 
-            plt.legend(loc='upper right')
-            plt.draw()
-            plt.pause(0.01)
+                plt.legend(loc='upper right')
+                plt.draw()
+                plt.pause(0.01)
 
-        plt.ioff()
-        plt.show()
+        if visualize:
+            plt.ioff()
+            plt.show()
 
         if not final_path_coords:
             raise Exception("No path found after ReedsShepp RRT*.")
         return final_path_coords
 
     except Exception as e:
-        plt.ioff()
-        plt.show()
+        if visualize:
+            plt.ioff()
+            plt.show()
         raise e
-
 
 # If run directly:
 if __name__=="__main__":
-    path = run_custom_rrt_reeds_shepp(
-        start=(2,12,0),
-        goal =(18,10, math.radians(90)),
-        xml_path="environment.xml",
+    model = mujoco.MjModel.from_xml_path('environment.xml')
+    path = rrt_reeds_shepp_algorithm(
+        goal =(12.5,2.5, -(math.pi/2)),
+        model=model,
         max_iter=500,
-        step_size=2.0,
+        step_size=2,
         turning_radius=1.0,
         rewire_radius=3.0,
-        goal_threshold=2.0
+        goal_threshold=2.0,
+        visualize=True
     )
     print("Found path =>", path)

@@ -122,20 +122,21 @@ def generate_mujoco_xml(
     for r in range(rows):
         for c in range(cols):
             cell = matrix[r][c]
-            if cell in ['0','1']:  # parking tile
+            if cell in ['0', '1']:  # Parking tile
                 tile_w, tile_h = parking_dims
                 color = color_parking
-            else:  # 'H' => road tile
+                tile_name = f"parking_space_{r}_{c}"
+            else:  # Road tile
                 tile_w, tile_h = road_dims
                 color = color_road
+                tile_name = f"road_{r}_{c}"
 
             half_x = tile_w / 2.0
             half_y = tile_h / 2.0
             center_x = c * tile_w
             center_y = r * tile_h
 
-            geom_name = f"tile_{r}_{c}"
-            xml_lines.append(f'        <geom name="{geom_name}" type="box"')
+            xml_lines.append(f'        <geom name="{tile_name}" type="box"')
             xml_lines.append(f'              pos="{center_x} {center_y} 0.0"')
             xml_lines.append(f'              size="{half_x} {half_y} 0.01"')
             xml_lines.append(f'              rgba="{color}" />')
@@ -175,12 +176,14 @@ def generate_mujoco_xml(
         xml_lines.append('            <!-- FRONT LEFT WHEEL -->')
         xml_lines.append('            <body name="front_left_wheel" pos="0.6 0.6 -0.4">')
         xml_lines.append('                <joint name="steer_left_joint" type="hinge" axis="0 1 1" range="-0.6 0.6"/>')
+        xml_lines.append('                <joint name="front_left_joint" type="hinge" axis="0 1 0" range="-999 999"/>')
         xml_lines.append('                <geom name="front_left_wheel_geom" type="cylinder" size="0.3 0.1" euler="1.5708 0 0" rgba="0.1 0.1 0.1 1"/>')
         xml_lines.append('            </body>')
         xml_lines.append('')
         xml_lines.append('            <!-- FRONT RIGHT WHEEL -->')
         xml_lines.append('            <body name="front_right_wheel" pos="0.6 -0.6 -0.4">')
-        xml_lines.append('                <joint name="steer_right_joint" type="hinge" axis="0 1 1" range="-0.6 0.6"/>')
+        xml_lines.append('                <joint name="steer_right_joint" type="hinge" axis="0 0 1" range="-0.6 0.6"/>')
+        xml_lines.append('                <joint name="front_right_joint" type="hinge" axis="0 1 0" range="-999 999"/>')
         xml_lines.append('                <geom name="front_right_wheel_geom" type="cylinder" size="0.3 0.1" euler="1.5708 0 0" rgba="0.1 0.1 0.1 1"/>')
         xml_lines.append('            </body>')
         xml_lines.append('')
@@ -202,17 +205,16 @@ def generate_mujoco_xml(
     xml_lines.append('')
     xml_lines.append('    <actuator>')
     if agent_r is not None:
-        xml_lines.append('        <motor name="steer_left_motor" joint="steer_left_joint" gear="1"/>')
-        xml_lines.append('        <motor name="steer_right_motor" joint="steer_right_joint" gear="1"/>')
-        xml_lines.append('        <motor name="drive_left_motor" joint="drive_left_joint" gear="100"/>')
-        xml_lines.append('        <motor name="drive_right_motor" joint="drive_right_joint" gear="100"/>')
+        xml_lines.append('        <motor name="steer_left_motor" joint="steer_left_joint" gear="50"/>')
+        xml_lines.append('        <motor name="steer_right_motor" joint="steer_right_joint" gear="50"/>')
+        xml_lines.append('        <motor name="drive_left_motor" joint="drive_left_joint" gear="1000"/>')
+        xml_lines.append('        <motor name="drive_right_motor" joint="drive_right_joint" gear="1000"/>')
     xml_lines.append('    </actuator>')
     xml_lines.append('</mujoco>')
 
     with open(xml_filename, 'w') as f:
         for line in xml_lines:
             f.write(line + "\n")
-
 
 def main(
     rows: int = 5,
@@ -294,7 +296,7 @@ if __name__ == "__main__":
     main(
         rows=5,
         total_cols=9,
-        object_probability=0.6,
+        object_probability=0.85,
         object_dims=(2,1.5,1),
         offset=0.5,
         parking_dims=(2.5, 2.5),
